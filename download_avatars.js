@@ -1,7 +1,6 @@
 var request = require('request');
 var authToken = require('./secrets').GITHUB_TOKEN;
-// ****** code here *******//
-
+var fs = require('fs');
 
 function getRepoContributors(repoOwner, repoName, cb) {
   var options = {
@@ -11,21 +10,32 @@ function getRepoContributors(repoOwner, repoName, cb) {
       'Authorization': 'token ' + authToken
     }
   };
-  //console.log(options);
-  request(options, function (err, res, body) {
-    cb(err, body);
-  });
+  request(options, cb);
 }
 
-getRepoContributors("jquery", "jquery", function (err, result) {
-  var arr = JSON.parse(result);
-    for (var i = 0; i < arr.length; i++) {
-      console.log(arr[i].avatar_url)
-    }
-});
-//console.log("Errors:", err);
-//console.log("Result:", result);
+function downloadImageByUrl(url, filePath) {
+  request.get(url)
+    .on('error', function (err) {
+      throw err;
+    })
+    .pipe(fs.createWriteStream(filePath));
+  return;
+}
+
+function getAllAvatars(err, result, body) {
+  var arr = JSON.parse(body);
+  for (var i = 0; i < arr.length; i++) {
+    downloadImageByUrl(arr[i].avatar_url, './avatars/' + arr[i].login + ".jpg");
+  }
+}
 
 
-// ******* code end  *********//
-//console.log('Welcome to the GitHub Avatar Downloader!');
+// downloadImageByURL("https://avatars2.githubusercontent.com/u/2741?v=3&s=466", "avatars/kvirani.jpg")
+
+getRepoContributors("jquery", "jquery", getAllAvatars);
+
+//function downloadImageByURL(url, filePath) {
+//  request.get(url)
+//}
+//.pipe(fs.createWriteStream('avatars/lkeen.jpg'));
+//downloadImageByURL("https://avatars2.githubusercontent.com/u/2741?v=3&s=466", "avatars/kvirani.jpg")
